@@ -14,7 +14,9 @@ ENDC = '\033[0m'  # 重置颜色
 
 def convert_to_number(s):
     s = s.strip().lower()
-    if s.endswith('k'):
+    if s.endswith('r'):
+        return float(s[:-1])
+    elif s.endswith('k'):
         return float(s[:-1]) * 1000
     elif s.endswith('m'):
         return float(s[:-1]) * 1000000
