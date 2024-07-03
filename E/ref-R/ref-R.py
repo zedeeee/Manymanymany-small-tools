@@ -1,5 +1,8 @@
+# -*- coding: utf-8 -*-
 import itertools
 import re
+import sys
+import os
 
 # ANSI颜色码
 RED = '\033[91m'
@@ -32,8 +35,19 @@ def format_resistance(value):
         return f"{value:.1f}" if value % 1 != 0 else f"{int(value)}"
 
 def read_numbers_from_file(file_path):
-    with open(file_path, 'r') as file:
-        lines = file.readlines()
+    try:
+        with open(file_path, 'r') as file:
+            lines = file.readlines()
+    except FileNotFoundError:
+        print(f"文件未找到: '{file_path}'")
+        sys.exit(1)
+    except IOError:
+        print(f"没有权限访问文件: {file_path}")
+        sys.exit(1)
+    except Exception as e:
+        print(f"其他错误: {e}")
+        sys.exit(1)
+
     numbers = []
     for line in lines:
         try:
@@ -92,8 +106,10 @@ def filter_pairs_by_total_resistance(pairs, total_resistance):
     return valid_pairs
 
 # 从文件读取数组
-file_path = 'R.txt'
-arr = read_numbers_from_file(file_path)
+if __name__ == "__main__":
+    dir = os.path.dirname(os.path.realpath(__file__))
+    file_path = os.path.join(dir, 'R.txt')
+    arr = read_numbers_from_file(file_path)
 
 # 获取目标值
 while True:
