@@ -105,65 +105,73 @@ def filter_pairs_by_total_resistance(pairs, total_resistance):
     
     return valid_pairs
 
+def main():
+    try:
+        dir = os.path.dirname(os.path.realpath(__file__))
+        file_path = os.path.join(dir, 'R.txt')
+        arr = read_numbers_from_file(file_path)
+
+
+        # 获取目标值
+        while True:
+            expr = input("\n请输入目标值: ")
+            expr = expr.replace("^", "**")  # 将输入中的^符号替换为**，以支持乘方运算
+
+            # 使用正则表达式检查输入是否只包含数字、小数点、加减乘除和空格
+            if re.match(r'^[\d\s\.\+\-\*\/\(\)]+$', expr):
+                try:
+                    target = eval(expr)
+                    print(f"\n匹配目标为: {RED}{target:.3f}{ENDC}")
+                    break  # 如果成功计算表达式，则跳出循环
+                except (SyntaxError, ZeroDivisionError, ValueError):
+                    print("输入错误，请输入一个有效的数学表达式！")
+            else:
+                print("输入错误，请输入一个有效的数学表达式！")
+
+        # 获取电压和电流
+        while True:
+            current_str = input("期望通过电流 (mA): ")
+            voltage_str = input("线路电压 (V): ")
+
+            try:
+                voltage = convert_to_number(voltage_str.replace('v', ''))
+                current = convert_to_number(current_str.replace('a', ''))
+                if voltage <= 0 or current <= 0:
+                    raise ValueError("电压和电流必须大于零")
+                total_resistance = voltage / current * 1000
+                print(f"\n总电阻 (R1 + R2) 接近: {RED}{format_resistance(total_resistance)}{ENDC} 欧姆")
+                break
+            except ValueError:
+                print("输入错误，请输入有效的电压和电流值！")
+
+        # 找到最接近的两个数的组合
+        pairs_1, pairs_5, pairs_10 = find_closest_ratios(arr, target)
+
+        # 筛选满足总电阻要求的组合
+        valid_pairs_1 = filter_pairs_by_total_resistance(pairs_1, total_resistance)
+        valid_pairs_5 = filter_pairs_by_total_resistance(pairs_5, total_resistance)
+        valid_pairs_10 = filter_pairs_by_total_resistance(pairs_10, total_resistance)
+
+        def sort_pairs_by_ratio(pairs):
+            return sorted(pairs, key=lambda x: x[2])
+
+        # 输出结果
+        def print_pairs(pairs, error_percent):
+            if pairs:
+                sorted_pairs = sort_pairs_by_ratio(pairs)
+                print(f"\n精度 {BOLD}{WHITE}{error_percent}%{ENDC} 以内的组合:")
+                for pair in sorted_pairs:
+                    print(f"R1 = {format_resistance(pair[0]):<6}     R2 = {format_resistance(pair[1]):<6}     值: {pair[4]}{pair[2]:.3f} {pair[3]}{ENDC} ")
+            else:
+                print(f"\n未找到精度在 {BOLD}{WHITE}{error_percent}%{ENDC} 以内的组合")
+
+        print_pairs(valid_pairs_1, 1)
+        print_pairs(valid_pairs_5, 5)
+        print_pairs(valid_pairs_10, 10)
+    except KeyboardInterrupt:
+        print("\n操作被用户中止。程序退出")
+        sys.exit(0)
+
 # 从文件读取数组
 if __name__ == "__main__":
-    dir = os.path.dirname(os.path.realpath(__file__))
-    file_path = os.path.join(dir, 'R.txt')
-    arr = read_numbers_from_file(file_path)
-
-# 获取目标值
-while True:
-    expr = input("\n请输入目标值: ")
-    expr = expr.replace("^", "**")  # 将输入中的^符号替换为**，以支持乘方运算
-
-    # 使用正则表达式检查输入是否只包含数字、小数点、加减乘除和空格
-    if re.match(r'^[\d\s\.\+\-\*\/\(\)]+$', expr):
-        try:
-            target = eval(expr)
-            print(f"\n匹配目标为: {RED}{target:.3f}{ENDC}")
-            break  # 如果成功计算表达式，则跳出循环
-        except (SyntaxError, ZeroDivisionError, ValueError):
-            print("输入错误，请输入一个有效的数学表达式！")
-    else:
-        print("输入错误，请输入一个有效的数学表达式！")
-
-# 获取电压和电流
-while True:
-    current_str = input("期望通过电流 (mA): ")
-    voltage_str = input("线路电压 (V): ")
-
-    try:
-        voltage = convert_to_number(voltage_str.replace('v', ''))
-        current = convert_to_number(current_str.replace('a', ''))
-        if voltage <= 0 or current <= 0:
-            raise ValueError("电压和电流必须大于零")
-        total_resistance = voltage / current * 1000
-        print(f"\n总电阻 (R1 + R2) 接近: {RED}{format_resistance(total_resistance)}{ENDC} 欧姆")
-        break
-    except ValueError:
-        print("输入错误，请输入有效的电压和电流值！")
-
-# 找到最接近的两个数的组合
-pairs_1, pairs_5, pairs_10 = find_closest_ratios(arr, target)
-
-# 筛选满足总电阻要求的组合
-valid_pairs_1 = filter_pairs_by_total_resistance(pairs_1, total_resistance)
-valid_pairs_5 = filter_pairs_by_total_resistance(pairs_5, total_resistance)
-valid_pairs_10 = filter_pairs_by_total_resistance(pairs_10, total_resistance)
-
-def sort_pairs_by_ratio(pairs):
-    return sorted(pairs, key=lambda x: x[2])
-
-# 输出结果
-def print_pairs(pairs, error_percent):
-    if pairs:
-        sorted_pairs = sort_pairs_by_ratio(pairs)
-        print(f"\n精度 {BOLD}{WHITE}{error_percent}%{ENDC} 以内的组合:")
-        for pair in sorted_pairs:
-            print(f"R1 = {format_resistance(pair[0]):<6}     R2 = {format_resistance(pair[1]):<6}     值: {pair[4]}{pair[2]:.3f} {pair[3]}{ENDC} ")
-    else:
-        print(f"\n未找到精度在 {BOLD}{WHITE}{error_percent}%{ENDC} 以内的组合")
-
-print_pairs(valid_pairs_1, 1)
-print_pairs(valid_pairs_5, 5)
-print_pairs(valid_pairs_10, 10)
+    main()
